@@ -184,3 +184,9 @@ EOF
 $ kubectl exec -it pod/<JENKINS-MANAGER-POD-NAME> -n jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 #### Note: Given that the Jenkins uses the Persistent Volume Claim for dynamic storage and ingress to expose the jenkins over public internet, you would require to install the Amazon EBS CSI driver add-on and AWS Load Balancer Controller to provision the EBS volume and Application or Network Load Balancer.
+
+#### References:
+- https://github.com/aws-samples/jenkins-cloudformation-deployment-example/blob/main/k8s/manifest.yaml - Jenkins deployment manifest
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html - Install AWS Load Balancer Controller with Helm
+- https://docs.aws.amazon.com/eks/latest/eksctl/installation.html - Installation options for Eksctl
+- https://helm.sh/docs/intro/install/ - Installing Helm
