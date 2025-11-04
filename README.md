@@ -1,10 +1,10 @@
-### Step-by-step guide to deploy Jenkins master on an Amazon EKS:
+# Step-by-step guide to deploy Jenkins master on an Amazon EKS:
 
-## Step 1: Create a Namespace for Jenkins:
+### Step 1: Create a Namespace for Jenkins:
 ```
 $ kubectl create namespace jenkins
  ```   
-## Step 2: Create Jenkins ServiceAccount, ClusterRole, and ClusterRoleBinding:
+### Step 2: Create Jenkins ServiceAccount, ClusterRole, and ClusterRoleBinding:
 ```
 $ kubectl apply -f - <<EOF
 # jenkins-sa.yaml
@@ -66,7 +66,7 @@ spec:
       storage: 20Gi
 EOF
 ```
-## Step 4: Create Jenkins Deployment:
+### Step 4: Create Jenkins Deployment:
 ```
 $ kubectl apply -f - <<EOF
 # jenkins-deployment.yaml
@@ -128,7 +128,7 @@ spec:
           claimName: jenkins-pvc
 EOF
 ```
-## Step 5: Create Jenkins Service:
+### Step 5: Create Jenkins Service:
 ```
 $ kubectl apply -f - <<EOF
 # jenkins-service.yaml
@@ -177,8 +177,8 @@ spec:
                   number: 80
 EOF
 ```
-## Step 7: Replace with jenkins manager pod name and fetch Jenkins login password
+### Step 7: Replace with jenkins manager pod name and fetch Jenkins login password
 ```
 $ kubectl exec -it pod/<JENKINS-MANAGER-POD-NAME> -n jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
-### Note: Given that the Jenkins uses the Persistent Volume Claim for dynamic storage and ingress to expose the jenkins over public internet, you would require to install the Amazon EBS CSI driver add-on and AWS Load Balancer Controller to provision the EBS volume and Application or Network Load Balancer.
+## Note: Given that the Jenkins uses the Persistent Volume Claim for dynamic storage and ingress to expose the jenkins over public internet, you would require to install the Amazon EBS CSI driver add-on and AWS Load Balancer Controller to provision the EBS volume and Application or Network Load Balancer.
