@@ -183,4 +183,4 @@ EOF
 ```
 $ kubectl exec -it pod/<JENKINS-MANAGER-POD-NAME> -n jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
-## Note: Given that the Jenkins uses the Persistent Volume Claim for dynamic storage and ingress to expose the jenkins over public internet, you would require to install the Amazon EBS CSI driver add-on and AWS Load Balancer Controller to provision the EBS volume and Application or Network Load Balancer.
+#### Note: Given that the Jenkins uses the Persistent Volume Claim for dynamic storage and ingress to expose the jenkins over public internet, you would require to install the Amazon EBS CSI driver add-on and AWS Load Balancer Controller to provision the EBS volume and Application or Network Load Balancer.
