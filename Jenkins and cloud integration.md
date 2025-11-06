@@ -9,7 +9,7 @@ Go to path `Jenkins >> Manage Jenkins >> Plugins` and install following plugin w
 - Git plugin
 - Docker plugin
 
-Part 1: Configure self k8s cluster for deployment where Jenkins master running on same k8s cluster:
+Scenario 1: Jenkins master running on the same k8s cluster:
 
 Step 1 : Configure Cloud:
 
@@ -43,10 +43,74 @@ You can configure jenkins agent pod template with following pod configurations
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks_add_template_config_1.png)
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks_add_pod_template_config_2.png)
 
-Part 2: Configure external k8s cluster for deployment where Jenkins master running running outside the k8s cluster:
+Scenario 2: Jenkins master running outside of the k8s cluster:
 
-Step 1 : Configure Cloud:
+Step 1: Create the clusterrole and clusterrolebinding on target k8s cluster.
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jenkins-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "deployments", "configmaps", "secrets"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+EOF
 
-Go to path `Jenkins >> Manage Jenkins >> Clouds >> New cloud` and give the name to cloud:
+# Create ClusterRoleBinding
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-role-binding
+subjects:
+- kind: ServiceAccount
+  name: jenkins-sa
+  namespace: jenkins
+roleRef:
+  kind: ClusterRole
+  name: jenkins-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+Step 2 : Create a Secret, which creates a token for the service account.
+```
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jnks-sa-token-secret
+  namespace: jenkins
+  annotations:
+    kubernetes.io/service-account.name: jenkins-sa
+type: kubernetes.io/service-account-token
+```
+
+Step 3 : Retrieve the service account secret token.
+```
+kubectl get secret jnks-sa-token-secret -n jenkins -o jsonpath='{.data.token}' | base64 --decode
+```
+
+Step 4: Create credential for cluster accessibility.
+
+![alt text]()
+
+Step 5 : Configure Cloud:
+
+Go to path `Jenkins >> Manage Jenkins >> Clouds >> New cloud` and give the name to the cloud:
+
+![alt text]()
+
+Next, configure the following details from the target k8s cluster.
+
+![alt text]()
+
+
+
 
 
