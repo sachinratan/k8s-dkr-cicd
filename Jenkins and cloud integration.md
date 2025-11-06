@@ -1,17 +1,17 @@
-Following are steps to integrate the Jenkins master with cloud provider e.g. Amazon EKS
+## Following are steps to integrate the Jenkins master with cloud provider e.g. Amazon EKS
 
-Pre-requisites : Install required plugin
+#### Pre-requisites : Install required plugin
 
-Go to path `Jenkins >> Manage Jenkins >> Plugins` and install following plugin which will be required for cloud, pipeline, and docker cliemt up.
+Go to path `Jenkins >> Manage Jenkins >> Plugins` and install following plugin which will be required for cloud, pipeline, and docker client set up.
 
 - Kubernetes plugin
 - Pipeline plugin
 - Git plugin
 - Docker plugin
 
-Scenario 1: Jenkins master running on the same k8s cluster:
+### Scenario 1: Jenkins master running on the same k8s cluster:
 
-Step 1 : Configure Cloud:
+#### Step 1 : Configure Cloud:
 
 Go to path `Jenkins >> Manage Jenkins >> Clouds >> New cloud` and give the name to cloud:
 
@@ -31,7 +31,7 @@ Kubernetes settings:
 
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks_add_cloud_3.png)
 
-Step 2 : Configure the pod template (optional):
+#### Step 2 : Configure the pod template (optional):
 
 Go to `Jenkins >> Manage Jenkins >> Clouds >> select the configured cloud name (Amazon_EKS) >> Select pod template >> New pod template`
 
@@ -43,9 +43,9 @@ You can configure jenkins agent pod template with following pod configurations
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks_add_template_config_1.png)
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks_add_pod_template_config_2.png)
 
-Scenario 2: Jenkins master running outside of the k8s cluster:
+## Scenario 2: Jenkins master running outside of the k8s cluster:
 
-Step 1: Create the clusterrole and clusterrolebinding on target k8s cluster.
+#### Step 1: Create the clusterrole and clusterrolebinding on target k8s cluster.
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
@@ -78,7 +78,7 @@ roleRef:
 EOF
 ```
 
-Step 2 : Create a Secret, which creates a token for the service account.
+#### Step 2 : Create a Secret, which creates a token for the service account.
 ```
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -91,16 +91,16 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Step 3 : Retrieve the service account secret token.
+#### Step 3 : Retrieve the service account secret token.
 ```
 kubectl get secret jnks-sa-token-secret -n jenkins -o jsonpath='{.data.token}' | base64 --decode
 ```
 
-Step 4: Create credential with type `secret text` for cluster accessibility.
+#### Step 4: Create credential with type `secret text` for cluster accessibility.
 
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks-sa-secret-creds.png)
 
-Step 5 : Configure Cloud:
+#### Step 5 : Configure Cloud:
 
 Go to path `Jenkins >> Manage Jenkins >> Clouds >> New cloud` and give the name to the cloud:
 
@@ -116,7 +116,9 @@ Test the connectivity to cloud (should see `test successful` meesage)
 
 ![alt text](https://github.com/sachinratan/k8s-dkr-cicd/blob/main/miscellaneous-data/jnks-cloud-test-success.png)
 
-Step 5 : With all above configuration, you should be able to deploy to external k8s cluster environment.
+#### Step 5 : 
+
+With all above configuration, you should be able to deploy to external k8s cluster environment.
 
 References:
 - https://devops.stackexchange.com/questions/9074/connect-external-jenkins-master-to-gke-with-kubernetes-plugin
