@@ -1,6 +1,6 @@
 Jenkins pipeline to build, push image to ECR and update helm for image tag
 
-##### Jenkins Pipeline:
+##### Jenkins Pipeline (testing):
 ```
 pipeline {
     agent {
@@ -238,6 +238,192 @@ spec:
 //        }
 //    }
     }
+    post {
+        success {
+            echo "Pipeline completed successfully! Image ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} pushed to ECR and Helm values updated."
+        }
+        failure {
+            echo "Pipeline failed. Please check the logs for details."
+        }
+        cleanup {
+            cleanWs()
+        }
+    }
+}
+```
+
+Jenkins Pipeline (Working n tested):
+```
+pipeline {
+    agent {
+        kubernetes {
+            cloud 'Amazon_EKS'
+            yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: agent
+spec:
+  containers:
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run
+  - name: kubectl
+    image: alpine/k8s:1.28.3
+    command:
+    - cat
+    tty: true
+  - name: git
+    image: alpine/git:latest
+    command:
+    - cat
+    tty: true
+    tty: true
+  volumes:
+  - name: docker-sock
+    emptyDir: {}
+'''
+        }
+    }
+    
+    environment {
+        AWS_ACCOUNT_ID = '559781698655'
+        AWS_REGION = 'eu-central-1'
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_REPOSITORY = 'git-jenkins-pipeline-repo'
+        GITHUB_APP_REPO = 'git@github.com:sachinratan/SLRS-Admin-DevOps-Integration-Website.git'
+        GITHUB_CREDENTIALS = 'jnks-github-ssh-auth-creds'
+        AWS_CREDENTIALS = 'srs-cli-creds'
+        GITHUB_HELM_REPO = 'git@github.com:sachinratan/jnks-k8s-integration-repo.git'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no'
+        GIT_BRANCH = 'main'
+    }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+    }
+    
+    stages {
+        stage('Setup Git and SSH') {
+            steps {
+                container('git') {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jnks-github-ssh-auth-creds', keyFileVariable: 'SSH_KEY')]) {
+                        sh '''
+                            # Configure Git
+                            git config --global user.name "sachinratan"
+                            git config --global user.email "sachinshinde741@gmail.com"
+                            git config --global --add safe.directory '*'
+
+                            # Setup SSH
+                            mkdir -p ~/.ssh
+                            cp $SSH_KEY ~/.ssh/id_rsa
+                            chmod 600 ~/.ssh/id_rsa
+                            ssh-keyscan github.com >> ~/.ssh/known_hosts
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Clone application code repo') {
+            steps {
+                container('git') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[
+                            url: "${GITHUB_APP_REPO}",
+                            credentialsId: "${GITHUB_CREDENTIALS}"
+                        ]]
+                    ])
+                }
+            }
+        }
+        
+        stage('Build App Docker Image') {
+            steps {
+                container('docker') {
+                    script {
+                        dockerImage = docker.build("${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}")
+                    }
+                }
+            }
+        }
+        
+        stage('Push to App Image to ECR') {
+            steps {
+                container('docker') {
+                    script {
+                        withAWS(credentials: "${AWS_CREDENTIALS}", region: "${AWS_REGION}") {
+                            def login = ecrLogin()
+                            sh "${login}"
+                        }
+                        
+                        dockerImage.push("${BUILD_NUMBER}")
+                        dockerImage.push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Checkout Helm Charts Repo') {
+            steps {
+                container('git') {
+                    dir('jnks-k8s-integration-repo') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: 'main']],
+                            userRemoteConfigs: [[
+                                url: "${GITHUB_HELM_REPO}",
+                                credentialsId: "${GITHUB_CREDENTIALS}"
+                            ]]
+                        ])
+                    }
+                }
+            }
+        }
+
+        stage('Verify Helm Charts files') {
+            steps {
+                container('git') {
+                    dir('jnks-k8s-integration-repo') {
+                        sh 'pwd'
+                        sh 'ls -lrth'
+                    }
+                }
+            }
+        }
+
+        stage('Update Helm Values') {
+            steps {
+                container('git') {
+                    dir('jnks-k8s-integration-repo') {
+                        script {
+                            def valuesYaml = readYaml file: 'values.yaml'
+                            valuesYaml.image.tag = "${IMAGE_TAG}"
+                            writeYaml file: 'values.yaml', data: valuesYaml, overwrite: true
+                            
+                            sh '''
+                                git checkout ${GIT_BRANCH}
+                                git add values.yaml
+                                git commit -m "Update image tag to ${IMAGE_TAG}"
+                                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                                git push origin ${CURRENT_BRANCH}
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     post {
         success {
             echo "Pipeline completed successfully! Image ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} pushed to ECR and Helm values updated."
