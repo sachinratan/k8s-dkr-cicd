@@ -50,7 +50,7 @@ $ kubectl debug -it -n kube-system --image=aws_cli:latest <controller_pod_name> 
 $ for node in $(kubectl get nodes --no-headers | "awk '{print $1}'); do kubectl uncordon $node; done
 ```
 
-#### - Patch deployment examples:
+#### Patch deployment examples:
 - To patch the individual deployment:
 ```
 $ kubectl patch deployments <deployment_name> -n <namespace> -p '{"spec": {"template": {"spec": {"nodeSelector": {"<key>": "<value>"}}}}}' 
@@ -59,4 +59,16 @@ $ kubectl patch deployments <deployment_name> -n <namespace> -p '{"spec": {"temp
 ```
 $ for deploy in $(kubectl get deployments -o custom-columns=NAME:.metadata.name --no-headers); do kubectl patch deployment $deploy -p '{"spec": {"template": {"spec": {"nodeSelector": {"<key>": "<value>"}}}}}';  done
 ```
-##### - Note: Replace the namespace, deployment name, and node selector label key value accordingly.
+- Note: Replace the namespace, deployment name, and node selector label key value accordingly.
+
+#### Following command measure the first byte response and check for slow DNS resolution that might cause latency:
+```
+$ curl -kso /dev/null -w "\n===============\n
+| DNS lookup: %{time_namelookup}\n
+| Connect: %{time_connect}\n
+| App connect: %{time_appconnect}\n
+| Pre-transfer: %{time_pretransfer}\n
+| Start transfer: %{time_starttransfer}\n
+| Total: %{time_total}\n
+| HTTP Code: %{http_code}\n===============\n" https://<replace_with_destination_service_domain_name>/
+```
