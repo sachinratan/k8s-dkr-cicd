@@ -1,2 +1,43 @@
-## This guide will help to check pod IP n mac on kubernetes node
+## This guide will help to install tcpdump and capture the packets over pod network interface (ENI) on worker node.
+
+#### Get the running pods name and residing node output.
+----------------------------------------------------
+$ kubectl get po -owide
+----------------------------------------------------
+
+#### Log into the pod shell.
+----------------------------------------------------
+$ kubectl exec -it <pod_name> -- sh
+----------------------------------------------------
+
+#### Check the MAC/ARP address of pod. You may need to install the net-tools (apt-get install -y net-tools) in order to make below command work)
+----------------------------------------------------
+# arp -a
+ip-192-xx-xx-255.ec2.internal (192.xx.xx.255) at 16:0c:5e:1c:d2:33 [ether] on eth0
+? (169.254.1.1) at 16:0c:5e:1c:d2:33 [ether] PERM on eth0                             >> Make a note of ARP address "16:0c:5e:1c:d2:33"
+----------------------------------------------------
+
+#### Exit the pod shell and log into the shell of worker node where, above pod was running (refer step 1 output) to collect the network interface (ENI) details.
+----------------------------------------------------
+ $ ifconfig | grep "16:0c:5e:1c:d2:33" -C 4    >> Replace the MAC address (16:0c:5e:1c:d2:33) noted in step 3 and you should see the network interface (ENI) details.
+
+enie2b9e26795a: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 9001                   >> Make a note of ENI
+        inet6 fe80::140c:5eff:fe1c:d233  prefixlen 64  scopeid 0x20<link>
+        ether 16:0c:5e:1c:d2:33  txqueuelen 0  (Ethernet)
+        RX packets 348  bytes 27445 (26.8 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 633  bytes 10341598 (9.8 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+----------------------------------------------------
+
+#### Next, install the tcpdump package on worker node with following command.
+----------------------------------------------------
+$ sudo yum install tcpdump -y
+----------------------------------------------------
+
+#### Once tcpdump installation completed, run the tcpdump command to capture the traffic on pod interface.
+----------------------------------------------------
+$ sudo  tcpdump -i "enie2b9e26795a"  -w pod-eni-traffic.pcap           >> Replace the ENI address noted in step 4 here.
+----------------------------------------------------
+
 
