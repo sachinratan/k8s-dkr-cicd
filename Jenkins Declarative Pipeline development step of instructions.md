@@ -44,7 +44,7 @@ clusterrole.rbac.authorization.k8s.io/jenkins-deployer-cluster-role created
 clusterrolebinding.rbac.authorization.k8s.io/jenkins-deployer-cluster-role-binding created
 ```
 
-Create the pipeline with following Jenkinsfile:
+Create the pipeline with following Jenkinsfile (Note: This pipeline is for 'Go Application image build, push to ECR and deployment to k8s cluster'):
 ```
 pipeline {
     agent {
@@ -88,10 +88,10 @@ spec:
     }
   }
     environment {
-        REPO_URL = '<AWS_ACC_NO>.dkr.ecr.eu-central-1.amazonaws.com'
+        REPO_URL = '559781698655.dkr.ecr.eu-central-1.amazonaws.com'
         BRANCH = 'main' // Or your desired branch
         ECR_REPO_NAME = 'git-jenkins-pipeline-repo'
-        AWS_ACCOUNT_ID = '<AWS_ACC_NO>'
+        AWS_ACCOUNT_ID = '559781698655'
         AWS_DEFAULT_REGION = 'eu-central-1'
         K8S_CLUSTER_NAME = 'sandbox-env-cluster'
         K8S_NAMESPACE = 'default'
@@ -181,49 +181,28 @@ spec:
                 }
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to EKS') {
             steps {
                 container('docker-client') {
                     script {
-                        withAWS(credentials: 'srs-cli-creds', region: env.AWS_REGION) {
-                            try {
-                                timeout(time: 10, unit: 'MINUTES') {
-                                    retry(1) {
-                                        sh '''
-                                        aws eks update-kubeconfig --name ${env.K8S_CLUSTER_NAME} -region ${env.AWS_DEFAULT_REGION}
-                                        kubectl apply -f k8s-deployment.yaml
-                                        kubectl apply -f k8s-service.yaml
-                                        '''
-                                    }
-                                }
-                            } catch (Exception e) {
-                                sh 'kubectl rollout undo deployment/myapp-deployment -n default'
-                                throw e
-                            }
+                        withAWS(credentials: 'srs-cli-creds', region: env.AWS_DEFAULT_REGION) {
+                            sh """
+                            aws eks update-kubeconfig --name ${env.K8S_CLUSTER_NAME} --region ${env.AWS_DEFAULT_REGION}
+                            kubectl apply -f k8s-deployment.yaml
+                            kubectl apply -f k8s-service.yaml
+                            """
                         }
                     }
                 }
             }
         }
     }
-        //stage('Deploy to Kubernetes') {
-        //    steps {
-        //        container('docker-client') {
-        //            script {
-        //                sh "kubectl set image deployment/${env.K8S_DEPLOYMENT_NAME} ${env.K8S_DEPLOYMENT_NAME}=${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_DEFAULT_REGION}.amazonaws.com/${env.ECR_REPO_NAME}:${params.IMAGE_TAG} -n ${env.K8S_NAMESPACE}"
-        //                sh "kubectl rollout status deployment/${env.K8S_DEPLOYMENT_NAME} -n ${env.K8S_NAMESPACE}"
-        //            }
-        //        }
-        //    }
-        //}
-       //}
-
     post {
         success {
-            echo 'Repository cloned successfully on Node1.'
+            echo 'Go Application image build, push to ECR and deployment to k8s cluster successful.'
         }
         failure {
-            echo 'Failed to clone repository.'
+            echo 'Failed to build the Go Application image, push to ECR and deployment to k8s cluster.'
         }
     }
 }
