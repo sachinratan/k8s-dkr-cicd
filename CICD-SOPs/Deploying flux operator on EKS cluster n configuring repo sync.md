@@ -57,7 +57,7 @@ gitrepository.source.toolkit.fluxcd.io/flux-system created
 
 ##### Create Helm Repository Source
 ```
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: my-helm-repo
