@@ -1,4 +1,4 @@
-## Create the application load balancer, deployed the ECS service with load balancer configuration. Following the ECS service deployment, update the ECS service to replace the existing load balancer target group with a newly created target group
+### This guide will help with to 'Create the application load balancer, deploy the ECS service with load balancer configuration. Following that update the ECS service to replace the existing load balancer target group with a newly created target group
 
 #### Created Application Load Balancer (ecs-svc-lb-test) with single target group (targetgroup/ecs-svc-lb-tg-test).
 
