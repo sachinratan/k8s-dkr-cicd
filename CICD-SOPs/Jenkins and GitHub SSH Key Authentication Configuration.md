@@ -4,25 +4,22 @@ First, generate an SSH key pair that will be used for authentication:
 bash
 
 #### On your local machine or any system with ssh-keygen
+```
 ssh-keygen -t ed25519 -C "sachinshinde741@gmail.com" -f jenkins-github-key
-
+```
 #### This creates two files:
 ##### - jenkins-github-key (private key)
 ##### - jenkins-github-key.pub (public key)
 
 Note: If your system doesn't support ed25519, use RSA instead:
-
-bash
-
+```
 ssh-keygen -t rsa -b 4096 -C "sachinshinde741@gmail.com" -f jenkins-github-key
-
+```
 Step 2: Add Public Key to GitHub
 Copy the public key content:
-
-bash
-
+```
 cat jenkins-github-key.pub
-
+```
 Add to GitHub:
 
 Go to GitHub.com and log in
@@ -55,7 +52,7 @@ Step 4: Configure Jenkins Pod Template
 Ensure your Kubernetes pod template includes Git and SSH client:
 
 yaml
-
+```
 apiVersion: v1
 kind: Pod
 spec:
@@ -74,10 +71,10 @@ spec:
     secret:
       secretName: jenkins-ssh-key
       defaultMode: 0400
-
+```
 Step 5: Test SSH Connection
 Create a test pipeline to verify the connection:
-
+```
 groovy
 
 pipeline {
@@ -116,12 +113,12 @@ spec:
         }
     }
 }
-
+```
 Expected output: "Hi sachinratan! You've successfully authenticated, but GitHub does not provide shell access."
 
 Step 6: Complete Pipeline with Authentication
 Here's a complete pipeline that authenticates and pushes code:
-
+```
 groovy
 
 pipeline {
@@ -175,3 +172,4 @@ spec:
                             git checkout ${GIT_BRANCH}
                         '''
 
+```
