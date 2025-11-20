@@ -14,7 +14,7 @@ Note: If your system doesn't support ed25519, use RSA instead:
 ssh-keygen -t rsa -b 4096 -C "sachinshinde741@gmail.com" -f jenkins-github-key
 ```
 #### Step 2: Add Public Key to GitHub
-Copy the public key content:
+- Copy the public key content:
 ```
 cat jenkins-github-key.pub
 ```
@@ -45,7 +45,7 @@ cat jenkins-github-key.pub
   - Click Add and paste your private key content (from jenkins-github-key file)
   - Passphrase: Leave empty (unless you set one during key generation)
   - Click Create
-  - 
+    
 #### Step 4: Configure Jenkins Pod Template
 - Ensure your Kubernetes pod template includes Git and SSH client:
 
