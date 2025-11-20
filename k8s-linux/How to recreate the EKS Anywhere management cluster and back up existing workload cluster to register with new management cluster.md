@@ -27,9 +27,9 @@ EKSA_RELEASE_VERSION=v0.17.3
 BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 CLI_TOOLS_IMAGE=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksa.cliTools.uri")
 ```
-#### The clusterctl move command needs to be executed for each workload cluster.
-#### It will only move the workload cluster resources from the EKS Anywhere backup to the new management cluster.
-#### If you have multiple workload clusters, you have to run the command for each cluster as shown below.
+##### - The clusterctl move command needs to be executed for each workload cluster.
+##### - It will only move the workload cluster resources from the EKS Anywhere backup to the new management cluster.
+##### - If you have multiple workload clusters, you have to run the command for each cluster as shown below.
 
 #### Move workload cluster w01 resources to the new management cluster mgmt-new
 ```
